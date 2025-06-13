@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ElectroMarket - Tienda de Tecnología</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <style id="app-style">
+    .cart-sidebar {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      max-width: 400px;
+      height: 100vh;
+      background-color: white;
+      z-index: 50;
+      transition: right 0.3s ease-in-out;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+    }
+    
+    .cart-sidebar.open {
+      right: 0;
+    }
+    
+    .cart-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease-in-out;
+    }
+    
+    .cart-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .product-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: #EF4444;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .form-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+      overflow: auto;
+    }
+    
+    .form-modal.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .form-container {
+      background-color: white;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeInUp 0.5s;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #3B82F6;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .btn-primary {
+      background-color: #3B82F6;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-primary:hover {
+      background-color: #2563EB;
+    }
+    
+    .btn-danger {
+      background-color: #EF4444;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-danger:hover {
+      background-color: #DC2626;
+    }
+    
+    .btn-success {
+      background-color: #10B981;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-success:hover {
+      background-color: #059669;
+    }
+    
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .product-card {
+      cursor: pointer;
+    }
+    
+    #product-detail-modal .form-container {
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    #product-detail-modal img.object-cover {
+      transition: transform 0.3s ease;
+    }
+    
+    #product-detail-modal img.object-cover:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Add styles for active category button */
+    .category-btn.active {
+      background-color: #3b82f6; /* Tailwind's blue-500 */
+      color: #fff;
+    }
+    
+    /* Add animation for quantity selector appearance */
+    .quantity-animated {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Add a visual divider between product sections */
+    .my-10 {
+      margin-top: 2.5rem; /* 40px */
+      margin-bottom: 2.5rem; /* 40px */
+    }
+    
+    .border-t-2 {
+      border-top-width: 2px;
+    }
+    
+    .border-gray-200 {
+      border-color: #e5e7eb;
+    }
+    
+    /* Ensure icon colors and spacing are clear in headings */
+    .text-red-500 {
+      color: #ef4444;
+    }
+    
+    .text-blue-500 {
+      color: #3b82f6;
+    }
+    
+    .mr-2 {
+      margin-right: 0.5rem;
+    }
+    
+    /* Add the new specific styles for the checkout modal */
+    .form-container {
+      background-color: white;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeInUp 0.5s;
+    }
+    
+    /* Add the new specific styles for the checkout modal */
+    #checkout-modal .form-container {
+      width: 1280px;
+      height: 720px;
+      max-width: 1280px;
+      max-height: 720px;
+      overflow: auto;
+    }
+    
+    /* Add new specific styles for the product detail modal */
+    #product-detail-modal .form-container {
+      width: 1280px;
+      height: 720px;
+      max-width: 1280px;
+      max-height: 720px;
+      overflow: auto;
+    }
+    
+    /* Add the new minimized state for chatbot */
+    #chatbot-widget.minimized #chatbot-body { 
+        display: none; 
+    }
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <h1 class="text-2xl font-bold text-blue-600">
+            <!-- Updated logo with doubled size: w-8 → w-16, h-8 → h-16 -->
+            <img src="https://i.postimg.cc/dQRbMV1F/Logo-Electro-1.png" alt="ElectroMarket logo" class="w-16 h-16 mr-2 inline-block">
+            ElectroMarket
+          </h1>
+        </div>
+        
+        <div class="flex items-center space-x-6">
+          <div class="flex items-center">
+            <span id="admin-label" class="mr-2 text-gray-600">Admin</span>
+            <label class="switch">
+              <input type="checkbox" id="admin-toggle">
+              <span class="slider"></span>
+            </label>
+            <span class="ml-2 text-gray-600">Cliente</span>
+          </div>
+          
+          <!-- Add login button here -->
+          <button id="login-button" class="btn-primary flex items-center">
+            <i class="fas fa-user mr-1"></i> Iniciar Sesión
+          </button>
+          
+          <div class="relative" id="cart-icon-container">
+            <button id="cart-button" class="text-gray-600 hover:text-blue-600 transition">
+              <i class="fas fa-shopping-cart text-xl"></i>
+              <span id="cart-badge" class="badge hidden">0</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 1. Add a new row of category buttons in the header section -->
+      <div class="mt-4 flex items-center justify-center">
+        <div class="relative w-full max-w-xl">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-400"></i>
+          </div>
+          <input id="search-input" type="text" placeholder="Buscar productos..." 
+            class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+      </div>
+      
+      <!-- Add category buttons row -->
+      <div class="mt-4 flex flex-wrap justify-center items-center gap-2 pb-2">
+        <button class="category-btn active bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium transition" data-category="all">
+          Todos
+        </button>
+        <button class="category-btn bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium transition hover:bg-blue-200" data-category="smartphones">
+          Smartphones
+        </button>
+        <button class="category-btn bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium transition hover:bg-blue-200" data-category="laptops">
+          Laptops
+        </button>
+        <button class="category-btn bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium transition hover:bg-blue-200" data-category="tablets">
+          Tablets
+        </button>
+        <button class="category-btn bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium transition hover:bg-blue-200" data-category="audio">
+          Audio
+        </button>
+        <button class="category-btn bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium transition hover:bg-blue-200" data-category="monitors">
+          Monitores
+        </button>
+        <button class="category-btn bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium transition hover:bg-blue-200" data-category="accessories">
+          Accesorios
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    <!-- Client View -->
+    <div id="client-view">
+      <!-- Add section for on-sale products with heading and icon -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-6 flex items-center">
+          <i class="fas fa-fire text-red-500 mr-2"></i> Ofertas Especiales
+        </h2>
+        <!-- Replace the grid with improved styling and layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" id="on-sale-container">
+          <!-- On-sale products will be loaded here -->
+          <div class="flex items-center justify-center p-8 w-full">
+            <i class="fas fa-spinner spin text-blue-500 text-4xl"></i>
+          </div>
+        </div>
+        
+        <!-- Add navigation controls for future slider implementation -->
+        <div class="flex justify-center mt-6 space-x-4">
+          <button class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        
+        <!-- Add a more distinctive separator between sections -->
+        <div class="my-12 border-t-2 border-gray-200 relative">
+          <div class="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4">
+            <span class="text-gray-400 text-sm uppercase tracking-wider">Explora más productos</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Add a clear visual divider between sections -->
+      <div class="my-10 border-t-2 border-gray-200"></div>
+      
+      <!-- Add heading for regular products section with icon -->
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold flex items-center">
+          <i class="fas fa-tags text-blue-500 mr-2"></i> Nuestros Productos
+        </h2>
+      </div>
+      
+      <!-- Regular products grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="products-container">
+        <!-- Products will be loaded here -->
+        <div class="flex items-center justify-center p-8 w-full">
+          <i class="fas fa-spinner spin text-blue-500 text-4xl"></i>
+        </div>
+      </div>
+      
+      <!-- Pagination container -->
+      <div id="pagination-container" class="flex justify-center mt-8 space-x-2">
+        <!-- Pagination buttons will be generated here -->
+      </div>
+    </div>
+    
+    <!-- Admin View (hidden by default) -->
+    <div id="admin-view" class="hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">Administrar Productos</h2>
+        <button id="new-product-btn" class="btn-primary">
+          <i class="fas fa-plus mr-2"></i> Nuevo Producto
+        </button>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="products-table-body" class="bg-white divide-y divide-gray-200">
+            <!-- Products will be loaded here -->
+            <tr>
+              <td colspan="4" class="px-6 py-4 text-center">
+                <i class="fas fa-spinner spin text-blue-500 text-xl mr-2"></i>
+                Cargando productos...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cart Sidebar -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <aside class="cart-sidebar" id="cart-sidebar">
+    <div class="p-4 border-b">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold">Carrito de Compras</h3>
+        <button id="close-cart" class="text-gray-500 hover:text-gray-800">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div id="cart-items" class="p-4 space-y-4">
+      <!-- Cart items will be loaded here -->
+      <div class="text-center text-gray-500 py-8">
+        Tu carrito está vacío
+      </div>
+    </div>
+    
+    <div class="border-t p-4 bg-gray-50">
+      <div class="flex justify-between mb-2">
+        <span>Subtotal:</span>
+        <span id="cart-subtotal">$0.00</span>
+      </div>
+      <div class="flex justify-between mb-4">
+        <span class="font-bold">Total:</span>
+        <span id="cart-total" class="font-bold">$0.00</span>
+      </div>
+      <button id="checkout-btn" class="w-full btn-primary py-3 flex items-center justify-center">
+        <i class="fas fa-shopping-bag mr-2"></i>
+        Finalizar Compra
+      </button>
+    </div>
+  </aside>
+
+  <!-- Product Form Modal -->
+  <div class="form-modal" id="product-form-modal">
+    <div class="form-container p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold" id="form-title">Nuevo Producto</h3>
+        <button id="close-form" class="text-gray-500 hover:text-gray-800">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="product-form">
+        <input type="hidden" id="product-id">
+        <div class="mb-4">
+          <label for="product-name" class="block text-gray-700 mb-2">Nombre del Producto</label>
+          <input type="text" id="product-name" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-4">
+          <label for="product-description" class="block text-gray-700 mb-2">Descripción</label>
+          <textarea id="product-description" class="w-full p-2 border rounded" rows="3" required></textarea>
+        </div>
+        
+        <div class="mb-4">
+          <label for="product-image" class="block text-gray-700 mb-2">URL de la Imagen</label>
+          <input type="url" id="product-image" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-4">
+          <label for="product-additional-images" class="block text-gray-700 mb-2">Imágenes adicionales (URLs separadas por comas)</label>
+          <textarea id="product-additional-images" class="w-full p-2 border rounded" rows="3" placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg"></textarea>
+        </div>
+        
+        <div class="mb-4">
+          <label for="product-category" class="block text-gray-700 mb-2">Categoría</label>
+          <select id="product-category" class="w-full p-2 border rounded" required>
+            <option value="">Seleccione una categoría</option>
+            <option value="smartphones">Smartphones</option>
+            <option value="laptops">Laptops</option>
+            <option value="tablets">Tablets</option>
+            <option value="audio">Audio</option>
+            <option value="monitors">Monitores</option>
+            <option value="accessories">Accesorios</option>
+          </select>
+        </div>
+        
+        <div class="mb-4">
+          <label class="flex items-center">
+            <input type="checkbox" id="product-on-sale" class="mr-2">
+            <span class="text-gray-700">En oferta</span>
+          </label>
+        </div>
+        
+        <div id="discount-container" class="mb-4 p-3 bg-blue-50 rounded-md hidden">
+          <label for="discount-slider" class="block text-gray-700 mb-2">Porcentaje de descuento: <span id="discount-value">0</span>%</label>
+          <input type="range" id="discount-slider" class="w-full" min="0" max="100" value="0">
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label for="product-price" class="block text-gray-700 mb-2">Precio</label>
+            <input type="number" id="product-price" class="w-full p-2 border rounded" min="0" step="0.01" required>
+          </div>
+          
+          <div>
+            <label for="product-stock" class="block text-gray-700 mb-2">Stock</label>
+            <input type="number" id="product-stock" class="w-full p-2 border rounded" min="0" required>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="cancel-form" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Confirmation Modal -->
+  <div class="form-modal" id="confirmation-modal">
+    <div class="form-container p-6 max-w-md">
+      <div class="text-center mb-6">
+        <i class="fas fa-exclamation-triangle text-yellow-500 text-5xl mb-4"></i>
+        <h3 class="text-xl font-bold">¿Estás seguro?</h3>
+        <p class="text-gray-600 mt-2">Esta acción no se puede deshacer.</p>
+      </div>
+      
+      <div class="flex justify-center space-x-3">
+        <button id="cancel-delete" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+        <button id="confirm-delete" class="btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Success Notification -->
+  <div id="notification" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded shadow-lg hidden transform transition-transform duration-300 translate-y-full">
+    <div class="flex items-center">
+      <i class="fas fa-check-circle mr-2"></i>
+      <span id="notification-message">Operación exitosa</span>
+    </div>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div class="form-modal" id="product-detail-modal">
+    <div class="form-container p-0 max-w-5xl">
+      <div class="bg-gray-100 p-4 border-b flex justify-between items-center">
+        <h2 id="detail-name" class="text-2xl font-bold"></h2>
+        <button id="close-detail" class="text-gray-500 hover:text-gray-800">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <div class="flex flex-col md:flex-row">
+        <div class="md:w-1/2 p-6">
+          <img id="detail-image" src="" alt="Product Image" class="w-full h-auto object-cover rounded-lg">
+          
+          <div class="mt-4 bg-blue-50 p-4 rounded-lg">
+            <h4 class="font-semibold text-blue-800 mb-2">Información Destacada</h4>
+            <div class="text-sm text-gray-700 space-y-2">
+              <p><i class="fas fa-tag mr-2 text-blue-600"></i>Categoría: <span id="detail-category">Electrónica</span></p>
+              <p><i class="fas fa-shipping-fast mr-2 text-blue-600"></i>Envío gratuito disponible</p>
+              <p><i class="fas fa-credit-card mr-2 text-blue-600"></i>Pago seguro garantizado</p>
+            </div>
+            <div class="mt-3 flex space-x-3">
+              <span class="text-sm text-gray-600">Compartir:</span>
+              <a href="#" class="text-blue-600 hover:text-blue-800"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" class="text-blue-400 hover:text-blue-600"><i class="fab fa-twitter"></i></a>
+              <a href="#" class="text-red-600 hover:text-red-800"><i class="fab fa-pinterest"></i></a>
+            </div>
+          </div>
+          
+          <div class="mt-6">
+            <h4 class="text-lg font-semibold mb-3 border-b pb-2">Imágenes adicionales</h4>
+            <div class="grid grid-cols-4 gap-3">
+              <!-- Images will be loaded dynamically -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="md:w-1/2 p-6 relative">
+          <div class="text-2xl text-blue-600 font-bold mb-4">$<span id="detail-price"></span></div>
+          
+          <p id="detail-description" class="text-gray-700 mb-6"></p>
+          
+          <!-- Replace the single button with a container for the quantity selector -->
+          <div id="cart-action-container" class="mb-6">
+            <button class="btn-primary px-6 py-3 w-full md:w-auto" id="detail-add-to-cart">
+              <i class="fas fa-shopping-cart mr-2"></i> Agregar al carrito
+            </button>
+            
+            <!-- Add quantity selector (initially hidden) -->
+            <div id="quantity-selector" class="hidden mt-4">
+              <div class="flex items-center mb-3">
+                <button id="decrease-quantity" class="w-10 h-10 flex items-center justify-center border rounded-l bg-gray-100 hover:bg-gray-200">
+                  <i class="fas fa-minus text-gray-600"></i>
+                </button>
+                <input type="number" id="item-quantity" class="w-16 h-10 border-t border-b text-center" min="1" value="1">
+                <button id="increase-quantity" class="w-10 h-10 flex items-center justify-center border rounded-r bg-gray-100 hover:bg-gray-200">
+                  <i class="fas fa-plus text-gray-600"></i>
+                </button>
+              </div>
+              <button id="confirm-add-to-cart" class="btn-primary w-full py-2">
+                <i class="fas fa-shopping-cart mr-2"></i> Agregar
+              </button>
+            </div>
+          </div>
+          
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-3 border-b pb-2">Especificaciones técnicas</h4>
+            <ul class="space-y-3">
+              <li class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="font-medium text-gray-700 mr-4">Marca:</span>
+                <span class="text-gray-600 flex-grow text-right">ElectroTech</span>
+              </li>
+              <li class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="font-medium text-gray-700 mr-4">Modelo:</span>
+                <span class="text-gray-600 flex-grow text-right">XT-2025</span>
+              </li>
+              <li class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="font-medium text-gray-700 mr-4">Garantía:</span>
+                <span class="text-gray-600 flex-grow text-right">12 meses</span>
+              </li>
+              <li class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="font-medium text-gray-700 mr-4">Disponibilidad:</span>
+                <span id="detail-stock" class="text-green-600 flex-grow text-right"></span>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 class="text-lg font-semibold mb-3 border-b pb-2">Opiniones</h4>
+            <div class="space-y-3">
+              <div class="border-b pb-3">
+                <div class="flex items-center mb-1">
+                  <div class="text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="far fa-star"></i>
+                  </div>
+                  <span class="ml-2 font-medium">Carlos G.</span>
+                </div>
+                <p class="text-sm text-gray-600">Excelente producto, cumple con todas mis expectativas. La batería dura todo el día y el rendimiento es óptimo.</p>
+              </div>
+              <div class="border-b pb-3">
+                <div class="flex items-center mb-1">
+                  <div class="text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                  </div>
+                  <span class="ml-2 font-medium">Laura M.</span>
+                </div>
+                <p class="text-sm text-gray-600">Muy buen dispositivo, aunque el tiempo de entrega fue mayor al esperado. La calidad es buena.</p>
+              </div>
+              <div class="border-b pb-3">
+                <div class="flex items-center mb-1">
+                  <div class="text-yellow-400">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                  </div>
+                  <span class="ml-2 font-medium">Miguel A.</span>
+                </div>
+                <p class="text-sm text-gray-600">Increíble relación calidad-precio. Lo recomiendo totalmente, es exactamente lo que estaba buscando.</p>
+              </div>
+              <div class="text-center">
+                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  Ver más opiniones <i class="fas fa-chevron-down ml-1"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Login Modal -->
+  <div class="form-modal" id="login-modal">
+    <div class="form-container p-6 max-w-md">
+      <div class="flex justify-between items-center mb-4">
+        <!-- Add tabs for login and register -->
+        <div class="flex border-b w-full">
+          <button id="login-tab" class="py-2 px-4 font-semibold border-b-2 border-blue-500 text-blue-600">
+            Iniciar Sesión
+          </button>
+          <button id="register-tab" class="py-2 px-4 font-semibold text-gray-500 hover:text-gray-700">
+            Crear Cuenta
+          </button>
+          <div class="flex-grow border-b"></div>
+        </div>
+        <button id="close-login" class="text-gray-500 hover:text-gray-800 ml-4">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <!-- Login Form (shown by default) -->
+      <form id="login-form">
+        <div class="mb-4">
+          <label for="login-email" class="block text-gray-700 mb-2">Email</label>
+          <input type="email" id="login-email" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-6">
+          <label for="login-password" class="block text-gray-700 mb-2">Contraseña</label>
+          <input type="password" id="login-password" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-6">
+          <label class="flex items-center">
+            <input type="checkbox" id="remember-login" class="mr-2">
+            <span class="text-sm text-gray-700">Recordar mi sesión</span>
+          </label>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="cancel-login" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+          <button type="submit" class="btn-primary">Iniciar Sesión</button>
+        </div>
+      </form>
+      
+      <!-- Register Form (hidden by default) -->
+      <form id="register-form" class="hidden">
+        <div class="mb-4">
+          <label for="register-email" class="block text-gray-700 mb-2">Email</label>
+          <input type="email" id="register-email" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-4">
+          <label for="register-fullname" class="block text-gray-700 mb-2">Nombre Completo</label>
+          <input type="text" id="register-fullname" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-4">
+          <label for="register-password" class="block text-gray-700 mb-2">Contraseña</label>
+          <input type="password" id="register-password" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="mb-6">
+          <label for="register-confirm-password" class="block text-gray-700 mb-2">Confirmar Contraseña</label>
+          <input type="password" id="register-confirm-password" class="w-full p-2 border rounded" required>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="cancel-register" class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Cancelar</button>
+          <button type="submit" class="btn-primary">Crear Cuenta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Checkout Modal -->
+  <div class="form-modal" id="checkout-modal">
+    <div class="form-container p-0 max-w-5xl">
+      <div class="bg-gray-100 p-4 border-b flex justify-between items-center">
+        <h2 class="text-2xl font-bold">Finalizar Compra</h2>
+        <button id="close-checkout" class="text-gray-500 hover:text-gray-800">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <div class="flex flex-col md:flex-row">
+        <div class="md:w-1/2 p-6 border-r">
+          <h3 class="text-xl font-semibold mb-4">Productos en tu carrito</h3>
+          <div id="checkout-items" class="space-y-4 max-h-80 overflow-y-auto">
+            <!-- Items will be loaded here -->
+          </div>
+          
+          <!-- Add coupon section -->
+          <div class="mt-6 pt-4 border-t">
+            <h4 class="text-lg font-semibold mb-3">¿Tienes un cupón de descuento?</h4>
+            <div class="flex items-center space-x-2">
+              <input type="text" placeholder="Código promocional" class="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <button class="btn-primary px-4 py-2">Aplicar</button>
+            </div>
+          </div>
+          
+          <!-- Add special instructions section -->
+          <div class="mt-6 pt-4 border-t">
+            <h4 class="text-lg font-semibold mb-3">Instrucciones especiales de envío</h4>
+            <textarea placeholder="Añade cualquier nota o instrucción especial para la entrega..." class="w-full p-3 border rounded h-24 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+          </div>
+          
+          <div class="mt-6 pt-4 border-t">
+            <div class="flex justify-between mb-2">
+              <span class="font-medium">Subtotal:</span>
+              <span id="checkout-subtotal">$0.00</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="font-medium">Envío:</span>
+              <span id="checkout-shipping">$0.00</span>
+            </div>
+            <div class="flex justify-between mb-2 text-green-600">
+              <span class="font-medium">Descuento:</span>
+              <span id="checkout-discount">-$0.00</span>
+            </div>
+            <div class="flex justify-between text-lg font-bold pt-2 border-t mt-2">
+              <span>Total:</span>
+              <span id="checkout-total">$0.00</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="md:w-1/2 p-6">
+          <h3 class="text-xl font-semibold mb-4">Información de envío</h3>
+          <form id="checkout-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-gray-700 mb-1">Nombre</label>
+                <input type="text" class="w-full p-2 border rounded" required>
+              </div>
+              <div>
+                <label class="block text-gray-700 mb-1">Apellido</label>
+                <input type="text" class="w-full p-2 border rounded" required>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-gray-700 mb-1">Email</label>
+              <input type="email" class="w-full p-2 border rounded" required>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-gray-700 mb-1">Dirección</label>
+              <input type="text" class="w-full p-2 border rounded" required>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="block text-gray-700 mb-1">Ciudad</label>
+                <input type="text" class="w-full p-2 border rounded" required>
+              </div>
+              <div>
+                <label class="block text-gray-700 mb-1">Código Postal</label>
+                <input type="text" class="w-full p-2 border rounded" required>
+              </div>
+              <div>
+                <label class="block text-gray-700 mb-1">Teléfono</label>
+                <input type="tel" class="w-full p-2 border rounded" required>
+              </div>
+            </div>
+            
+            <h3 class="text-xl font-semibold mb-4 mt-6">Método de pago</h3>
+            <div class="space-y-3 mb-6">
+              <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="payment" value="credit" class="mr-2" checked>
+                <i class="far fa-credit-card mr-2 text-blue-500"></i>
+                <span>Tarjeta de crédito / débito</span>
+              </label>
+              <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="payment" value="paypal" class="mr-2">
+                <i class="fab fa-paypal mr-2 text-blue-700"></i>
+                <span>PayPal</span>
+              </label>
+              <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50">
+                <input type="radio" name="payment" value="cash" class="mr-2">
+                <i class="fas fa-money-bill-wave mr-2 text-green-600"></i>
+                <span>Pago en efectivo</span>
+              </label>
+            </div>
+            
+            <button type="submit" class="btn-success w-full py-3 text-lg">
+              <i class="fas fa-check-circle mr-2"></i> Confirmar compra
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script id="app-script">
+    // DOM Elements
+    const adminToggle = document.getElementById('admin-toggle');
+    const clientView = document.getElementById('client-view');
+    const adminView = document.getElementById('admin-view');
+    const cartButton = document.getElementById('cart-button');
+    const cartSidebar = document.getElementById('cart-sidebar');
+    const cartOverlay = document.getElementById('cart-overlay');
+    const closeCart = document.getElementById('close-cart');
+    const cartItems = document.getElementById('cart-items');
+    const cartBadge = document.getElementById('cart-badge');
+    const cartSubtotal = document.getElementById('cart-subtotal');
+    const cartTotal = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const productsContainer = document.getElementById('products-container');
+    const productsTableBody = document.getElementById('products-table-body');
+    const newProductBtn = document.getElementById('new-product-btn');
+    const productFormModal = document.getElementById('product-form-modal');
+    const closeForm = document.getElementById('close-form');
+    const cancelForm = document.getElementById('cancel-form');
+    const productForm = document.getElementById('product-form');
+    const formTitle = document.getElementById('form-title');
+    const productId = document.getElementById('product-id');
+    const productName = document.getElementById('product-name');
+    const productDescription = document.getElementById('product-description');
+    const productImage = document.getElementById('product-image');
+    const productPrice = document.getElementById('product-price');
+    const productStock = document.getElementById('product-stock');
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const cancelDelete = document.getElementById('cancel-delete');
+    const confirmDelete = document.getElementById('confirm-delete');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+    const productDetailModal = document.getElementById('product-detail-modal');
+    const closeDetail = document.getElementById('close-detail');
+    const detailImage = document.getElementById('detail-image');
+    const detailName = document.getElementById('detail-name');
+    const detailPrice = document.getElementById('detail-price');
+    const detailDescription = document.getElementById('detail-description');
+    const detailStock = document.getElementById('detail-stock');
+    const detailAddToCart = document.getElementById('detail-add-to-cart');
+    const loginModal = document.getElementById('login-modal');
+    const closeLogin = document.getElementById('close-login');
+    const cancelLogin = document.getElementById('cancel-login');
+    const loginForm = document.getElementById('login-form');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const rememberLogin = document.getElementById('remember-login');
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    const searchInput = document.getElementById('search-input');
+    const loginButton = document.getElementById('login-button');
+    const onSaleContainer = document.getElementById('on-sale-container');
+    const checkoutModal = document.getElementById('checkout-modal');
+    const closeCheckout = document.getElementById('close-checkout');
+    const checkoutItems = document.getElementById('checkout-items');
+    const checkoutSubtotal = document.getElementById('checkout-subtotal');
+    const checkoutShipping = document.getElementById('checkout-shipping');
+    const checkoutTotal = document.getElementById('checkout-total');
+    const checkoutForm = document.getElementById('checkout-form');
+    const loginTab = document.getElementById('login-tab');
+    const registerTab = document.getElementById('register-tab');
+    const registerForm = document.getElementById('register-form');
+    const registerEmail = document.getElementById('register-email');
+    const registerFullname = document.getElementById('register-fullname');
+    const registerPassword = document.getElementById('register-password');
+    const registerConfirmPassword = document.getElementById('register-confirm-password');
+    const cancelRegister = document.getElementById('cancel-register');
+    const checkoutDiscount = document.getElementById('checkout-discount');
+    const aboutUsToggle = document.getElementById('about-us-toggle');
+    const aboutUsContent = document.getElementById('about-us-content');
+    const aboutUsIcon = document.getElementById('about-us-icon');
+    const toggleChatbot = document.getElementById('toggle-chatbot');
+    const chatbotWidget = document.getElementById('chatbot-widget');
+    const chatbotBody = document.getElementById('chatbot-body');
+    const chatInput = document.getElementById('chat-input');
+    const sendMessage = document.getElementById('send-message');
+    const chatMessages = document.getElementById('chat-messages');
+
+    // State
+    let cart = [];
+    let products = [];
+    let currentProductId = null;
+    let currentCategory = 'all';
+    let searchTerm = '';
+    let currentPage = 1;
+    const productsPerPage = 10;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCart();
+      updateCartUI();
+      const isAdmin = localStorage.getItem('adminMode') === 'true';
+      adminToggle.checked = !isAdmin;
+      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true' || sessionStorage.getItem('userLoggedIn') === 'true';
+      updateLoginButtonState(isLoggedIn);
+      if (!isLoggedIn) {
+        adminToggle.disabled = true;
+      } else if (isLoggedIn && !isAdmin) {
+        adminToggle.disabled = true;
+      }
+      toggleAdminView();
+      if (isLoggedIn) {
+        loadProducts();
+      } else {
+        openLoginModal();
+      }
+    });
+
+    adminToggle.addEventListener('change', toggleAdminView);
+    cartButton.addEventListener('click', openCart);
+    closeCart.addEventListener('click', closeCartSidebar);
+    cartOverlay.addEventListener('click', closeCartSidebar);
+    checkoutBtn.addEventListener('click', checkout);
+    newProductBtn.addEventListener('click', openNewProductForm);
+    closeForm.addEventListener('click', closeProductForm);
+    cancelForm.addEventListener('click', closeProductForm);
+    productForm.addEventListener('submit', saveProduct);
+    cancelDelete.addEventListener('click', closeConfirmationModal);
+    confirmDelete.addEventListener('click', deleteConfirmedProduct);
+    closeDetail.addEventListener('click', closeProductDetail);
+    closeLogin.addEventListener('click', closeLoginModal);
+    cancelLogin.addEventListener('click', closeLoginModal);
+    loginForm.addEventListener('submit', handleLogin);
+    searchInput.addEventListener('input', handleSearch);
+    loginButton.addEventListener('click', handleLoginButtonClick);
+    closeCheckout.addEventListener('click', closeCheckoutModal);
+    checkoutForm.addEventListener('submit', processOrder);
+    loginTab.addEventListener('click', function() {
+      document.getElementById('login-form').classList.remove('hidden');
+      document.getElementById('register-form').classList.add('hidden');
+      document.getElementById('login-tab').classList.add('border-b-2', 'border-blue-500', 'text-blue-600');
+      document.getElementById('login-tab').classList.remove('text-gray-500');
+      document.getElementById('register-tab').classList.remove('border-b-2', 'border-blue-500', 'text-blue-600');
+      document.getElementById('register-tab').classList.add('text-gray-500');
+    });
+    registerTab.addEventListener('click', function() {
+      document.getElementById('login-form').classList.add('hidden');
+      document.getElementById('register-form').classList.remove('hidden');
+      document.getElementById('register-tab').classList.add('border-b-2', 'border-blue-500', 'text-blue-600');
+      document.getElementById('register-tab').classList.remove('text-gray-500');
+      document.getElementById('login-tab').classList.remove('border-b-2', 'border-blue-500', 'text-blue-600');
+      document.getElementById('login-tab').classList.add('text-gray-500');
+    });
+    registerForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = registerEmail.value;
+      const fullname = registerFullname.value;
+      const password = registerPassword.value;
+      const confirmPassword = registerConfirmPassword.value;
+      if (!email || !fullname || !password || !confirmPassword) {
+        showNotification('Por favor complete todos los campos', 'error');
+        return;
+      }
+      if (password !== confirmPassword) {
+        showNotification('Las contraseñas no coinciden', 'error');
+        return;
+      }
+      if (email.includes('@') && password.length >= 6) {
+        sessionStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('adminMode', 'false');
+        adminToggle.checked = true;
+        adminToggle.disabled = true;
+        toggleAdminView();
+        closeLoginModal();
+        showNotification('Cuenta creada exitosamente');
+        updateLoginButtonState(true);
+        loadProducts();
+      } else {
+        showNotification('Por favor use un email válido y una contraseña de al menos 6 caracteres', 'error');
+      }
+    });
+    cancelRegister.addEventListener('click', closeLoginModal);
+
+    function toggleAdminView() {
+      const isAdmin = !adminToggle.checked;
+      localStorage.setItem('adminMode', isAdmin);
+      if (isAdmin) {
+        clientView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+      } else {
+        clientView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+      }
+    }
+
+    function openCart() {
+      cartSidebar.classList.add('open');
+      cartOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCartSidebar() {
+      cartSidebar.classList.remove('open');
+      cartOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function addToCart(product) {
+      const existingItem = cart.find(item => item.id === product.id);
+      if (existingItem) {
+        if (existingItem.quantity >= product.stock) {
+          showNotification('No hay más unidades disponibles de este producto', 'error');
+          return;
+        }
+        existingItem.quantity++;
+      } else {
+        if (product.stock <= 0) {
+          showNotification('Este producto está agotado', 'error');
+          return;
+        }
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1
+        });
+      }
+      saveCart();
+      updateCartUI();
+      showNotification('Producto añadido al carrito');
+    }
+
+    function updateCartItemQuantity(productId, newQuantity) {
+      if (newQuantity <= 0) {
+        cart = cart.filter(item => item.id !== productId);
+      } else {
+        const item = cart.find(item => item.id === productId);
+        if (item) {
+          const product = products.find(p => p.id === productId);
+          if (product && newQuantity > product.stock) {
+            showNotification(`Solo hay ${product.stock} unidades disponibles`, 'error');
+            return;
+          }
+          item.quantity = newQuantity;
+        }
+      }
+      saveCart();
+      updateCartUI();
+    }
+
+    function saveCart() {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    function loadCart() {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        cart = JSON.parse(savedCart);
+      }
+    }
+
+    function updateCartUI() {
+      if (cart.length === 0) {
+        cartItems.innerHTML = '<div class="text-center text-gray-500 py-8">Tu carrito está vacío</div>';
+        cartBadge.classList.add('hidden');
+        cartBadge.textContent = '0';
+      } else {
+        cartBadge.classList.remove('hidden');
+        cartBadge.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+        cartItems.innerHTML = cart.map(item => {
+          const product = products.find(p => p.id === item.id);
+          let effectivePrice = item.price;
+          let priceDisplay = '';
+          if (product && product.onSale && product.discount > 0) {
+            effectivePrice = product.price * (1 - product.discount / 100);
+            priceDisplay = `
+              <div class="text-blue-600 font-semibold">
+                <span class="text-red-500 line-through text-sm">$${item.price.toFixed(2)}</span>
+                $${effectivePrice.toFixed(2)}
+              </div>`;
+          } else {
+            priceDisplay = `<div class="text-blue-600 font-semibold">$${effectivePrice.toFixed(2)}</div>`;
+          }
+          return `
+            <div class="flex border-b pb-4">
+              <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded mr-4">
+              <div class="flex-1">
+                <h4 class="font-semibold">${item.name}</h4>
+                ${priceDisplay}
+                <div class="flex items-center mt-2">
+                  <button class="w-8 h-8 flex items-center justify-center border rounded-l" onclick="updateCartItemQuantity(${item.id}, ${item.quantity - 1})">
+                    <i class="fas fa-minus text-xs"></i>
+                  </button>
+                  <span class="w-10 h-8 flex items-center justify-center border-t border-b">${item.quantity}</span>
+                  <button class="w-8 h-8 flex items-center justify-center border rounded-r" onclick="updateCartItemQuantity(${item.id}, ${item.quantity + 1})">
+                    <i class="fas fa-plus text-xs"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="ml-2">
+                <button class="text-gray-400 hover:text-red-500" onclick="updateCartItemQuantity(${item.id}, 0)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+      cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      cartTotal.textContent = `$${subtotal.toFixed(2)}`;
+    }
+
+    function checkout() {
+      if (cart.length === 0) {
+        showNotification('Tu carrito está vacío', 'error');
+        return;
+      }
+      let subtotal = 0;
+      let totalDiscount = 0;
+      checkoutItems.innerHTML = cart.map(item => {
+        const product = products.find(p => p.id === item.id);
+        let effectivePrice = item.price;
+        let priceDisplay = '';
+        let itemTotal = 0;
+        if (product && product.onSale && product.discount > 0) {
+          effectivePrice = product.price * (1 - product.discount / 100);
+          itemTotal = effectivePrice * item.quantity;
+          const itemDiscount = (product.price - effectivePrice) * item.quantity;
+          totalDiscount += itemDiscount;
+          priceDisplay = `
+            <div class="text-gray-600">
+              <span class="font-semibold">${item.quantity}</span> × 
+              <span class="text-red-500 line-through">$${item.price.toFixed(2)}</span>
+              <span>$${effectivePrice.toFixed(2)}</span>
+            </div>
+            <div class="text-blue-600 font-medium">$${itemTotal.toFixed(2)}</div>`;
+        } else {
+          itemTotal = item.price * item.quantity;
+          priceDisplay = `
+            <div class="text-gray-600">
+              <span class="font-semibold">${item.quantity}</span> × 
+              <span>$${item.price.toFixed(2)}</span>
+            </div>
+            <div class="text-blue-600 font-medium">$${itemTotal.toFixed(2)}</div>`;
+        }
+        subtotal += itemTotal;
+        return `
+          <div class="flex border-b pb-3">
+            <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded mr-3">
+            <div class="flex-1">
+              <h4 class="font-medium">${item.name}</h4>
+              <div class="flex justify-between text-sm mt-1">
+                ${priceDisplay}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      const shipping = subtotal > 0 ? 15.00 : 0;
+      const total = subtotal + shipping;
+      checkoutSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      checkoutShipping.textContent = `$${shipping.toFixed(2)}`;
+      checkoutDiscount.textContent = `-$${totalDiscount.toFixed(2)}`;
+      checkoutTotal.textContent = `$${total.toFixed(2)}`;
+      closeCartSidebar();
+      checkoutModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCheckoutModal() {
+      checkoutModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function processOrder(e) {
+      e.preventDefault();
+      cart = [];
+      saveCart();
+      updateCartUI();
+      closeCheckoutModal();
+      showNotification('¡Compra finalizada con éxito! Gracias por tu pedido.');
+    }
+
+    function loadProducts() {
+      setTimeout(() => {
+        const savedProducts = localStorage.getItem('products');
+        if (savedProducts) {
+          products = JSON.parse(savedProducts);
+        } else {
+          products = [
+            { id: 1, name: "Laptop Ultra HD", description: "Potente laptop con procesador de última generación, 16GB RAM y 512GB SSD.", image: "https://cdn.pixabay.com/photo/2017/12/09/08/18/cart-3007671_960_720.jpg", price: 1299.99, stock: 10, category: "laptops" },
+            { id: 2, name: "Smartphone Pro X", description: "Smartphone con pantalla AMOLED de 6.5 pulgadas, cámara de 64MP y batería de larga duración.", image: "https://cdn.pixabay.com/photo/2016/11/29/05/08/apple-1867461_960_720.jpg", price: 899.99, stock: 15, category: "smartphones" },
+            { id: 3, name: "Tablet Air", description: "Tablet delgada y ligera con pantalla retina de 10.9 pulgadas y chip A14 Bionic.", image: "https://cdn.pixabay.com/photo/2015/02/02/15/28/office-621133_960_720.jpg", price: 499.99, stock: 8, category: "tablets" },
+            { id: 4, name: "Auriculares Noise-Cancelling", description: "Auriculares inalámbricos con cancelación de ruido y 20 horas de batería.", image: "https://cdn.pixabay.com/photo/2016/09/27/22/01/headphone-1699626_960_720.jpg", price: 249.99, stock: 20, category: "audio" },
+            { id: 5, name: "Monitor Curvo 4K", description: "Monitor curvo de 32 pulgadas con resolución 4K y tecnología HDR.", image: "https://cdn.pixabay.com/photo/2015/01/21/14/14/apple-606761_960_720.jpg", price: 399.99, stock: 5, category: "monitors" },
+            { id: 6, name: "Smartwatch Series 7", description: "Reloj inteligente con monitoreo de salud, GPS y resistencia al agua.", image: "https://cdn.pixabay.com/photo/2015/06/25/17/21/smart-watch-821557_960_720.jpg", price: 349.99, stock: 12, category: "accessories" },
+            { id: 7, name: "Smartphone Alpha", description: "Smartphone Alpha con pantalla AMOLED, 128GB de almacenamiento y cámara de 48MP.", image: "https://cdn.pixabay.com/photo/2016/11/29/05/08/phone-1867461_960_720.jpg", price: 699.99, stock: 20, category: "smartphones" },
+            { id: 8, name: "Smartphone Quantum", description: "Smartphone Quantum con procesador octa-core, 256GB de almacenamiento y cámara de 64MP.", image: "https://cdn.pixabay.com/photo/2017/04/03/15/52/mobile-phone-2198770_960_720.jpg", price: 799.99, stock: 15, category: "smartphones" },
+            { id: 9, name: "Smartphone Nova", description: "Smartphone Nova con pantalla infinity, 128GB de almacenamiento y cámara triple de 36MP.", image: "https://cdn.pixabay.com/photo/2016/12/09/11/33/smartphone-1894723_960_720.jpg", price: 649.99, stock: 18, category: "smartphones" },
+            { id: 10, name: "Smartphone Galaxy", description: "Smartphone Galaxy con pantalla OLED, 512GB de almacenamiento y cámara de 108MP.", image: "https://cdn.pixabay.com/photo/2016/11/10/16/18/phone-1814689_960_720.jpg", price: 899.99, stock: 10, category: "smartphones" },
+            { id: 11, name: "Smartphone Pixel", description: "Smartphone Pixel con el mejor sistema de fotografía, 256GB y batería de larga duración.", image: "https://cdn.pixabay.com/photo/2017/01/06/13/50/smartphone-1957740_960_720.jpg", price: 849.99, stock: 12, category: "smartphones" },
+            { id: 12, name: "Smartphone UltraSlim", description: "El smartphone más delgado del mercado con pantalla AMOLED y 128GB de almacenamiento.", image: "https://cdn.pixabay.com/photo/2016/11/29/12/30/phone-1869510_960_720.jpg", price: 749.99, stock: 25, category: "smartphones" },
+            { id: 13, name: "Smartphone TechPro", description: "Smartphone TechPro con pantalla resistente a golpes, 256GB y cámara profesional de 50MP.", image: "https://cdn.pixabay.com/photo/2016/11/20/08/33/camera-1842202_960_720.jpg", price: 779.99, stock: 14, category: "smartphones" },
+            { id: 14, name: "Smartphone Infinity", description: "Smartphone Infinity con pantalla sin bordes, 512GB y batería de 5000mAh.", image: "https://cdn.pixabay.com/photo/2017/12/11/18/13/smartphone-3012535_960_720.jpg", price: 829.99, stock: 8, category: "smartphones" },
+            { id: 15, name: "Smartphone MegaPixel", description: "Smartphone MegaPixel con la mejor cámara del mercado, 256GB y procesador ultra rápido.", image: "https://cdn.pixabay.com/photo/2014/08/05/10/30/iphone-410324_960_720.jpg", price: 859.99, stock: 16, category: "smartphones" },
+            { id: 16, name: "Smartphone Titan", description: "Smartphone Titan resistente al agua y golpes, 128GB y batería que dura 2 días.", image: "https://cdn.pixabay.com/photo/2016/12/09/11/33/smartphone-1894723_960_720.jpg", price: 729.99, stock: 22, category: "smartphones" }
+          ];
+          localStorage.setItem('products', JSON.stringify(products));
+        }
+        renderProducts();
+        renderAdminProducts();
+      }, 1000);
+    }
+
+    function renderProducts() {
+      let filteredProducts = products;
+      if (currentCategory !== 'all') {
+        filteredProducts = filteredProducts.filter(product => product.category === currentCategory);
+      }
+      if (searchTerm) {
+        filteredProducts = filteredProducts.filter(product =>
+          product.name.toLowerCase().includes(searchTerm) ||
+          product.description.toLowerCase().includes(searchTerm)
+        );
+      }
+      const onSaleProducts = products.filter(product => product.onSale);
+      if (onSaleProducts.length === 0) {
+        onSaleContainer.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <p class="text-gray-500">No hay ofertas especiales en este momento</p>
+          </div>
+        `;
+      } else {
+        onSaleContainer.innerHTML = onSaleProducts.map(product => {
+          const discountedPrice = product.price * (1 - product.discount / 100);
+          const priceDisplay = `
+            <div class="flex flex-col">
+              <span class="text-red-500 line-through text-sm">$${product.price.toFixed(2)}</span>
+              <span class="text-blue-600 font-bold text-xl">$${discountedPrice.toFixed(2)}</span>
+            </div>`;
+          return `
+            <div class="bg-white rounded-lg shadow overflow-hidden product-card" data-id="${product.id}">
+              <div class="relative">
+                <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
+                <span class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">
+                  -${product.discount}%
+                </span>
+              </div>
+              <div class="p-4">
+                <h3 class="text-lg font-semibold mb-2">
+                  ${product.name}
+                  <span class="text-red-500 ml-2">🔥</span>
+                </h3>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">${product.description}</p>
+                <div class="flex justify-between items-center">
+                  ${priceDisplay}
+                  <button class="btn-primary add-to-cart" data-id="${product.id}">
+                    <i class="fas fa-shopping-cart mr-1"></i> Agregar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      filteredProducts = filteredProducts.filter(product => !product.onSale);
+      if (filteredProducts.length === 0) {
+        productsContainer.innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">No se encontraron productos que coincidan con tu búsqueda</p>
+          </div>
+        `;
+        document.getElementById('pagination-container').innerHTML = '';
+        return;
+      }
+      const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+      if (currentPage > totalPages) {
+        currentPage = 1;
+      }
+      const startIndex = (currentPage - 1) * productsPerPage;
+      const paginatedProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
+      productsContainer.innerHTML = paginatedProducts.map(product => {
+        let priceDisplay = '';
+        if (product.onSale && product.discount > 0) {
+          const discountedPrice = product.price * (1 - product.discount / 100);
+          priceDisplay = `
+            <div class="flex flex-col">
+              <span class="text-red-500 line-through">$${product.price.toFixed(2)}</span>
+              ${discountedPrice.toFixed(2)}`;
+        } else {
+          priceDisplay = `<span class="text-blue-600 font-semibold">$${product.price.toFixed(2)}</span>`;
+        }
+        return `
+          <div class="bg-white rounded-lg shadow overflow-hidden product-card" data-id="${product.id}">
+            <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
+            <div class="p-4">
+              <h3 class="text-lg font-semibold mb-2">
+                ${product.name}
+                ${product.onSale ? '<span class="text-red-500 ml-2">🔥</span>' : ''}
+              </h3>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">${product.description}</p>
+              <div class="flex justify-between items-center">
+                ${priceDisplay}
+                <button class="btn-primary add-to-cart" data-id="${product.id}">
+                  <i class="fas fa-shopping-cart mr-1"></i> Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.querySelectorAll('#on-sale-container .add-to-cart').forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const productId = parseInt(button.getAttribute('data-id'));
+          const product = products.find(p => p.id === productId);
+          if (product) {
+            addToCart(product);
+          }
+        });
+      });
+      document.querySelectorAll('#on-sale-container .product-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const productId = parseInt(card.getAttribute('data-id'));
+          openProductDetail(productId);
+        });
+      });
+      document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const productId = parseInt(button.getAttribute('data-id'));
+          const product = products.find(p => p.id === productId);
+          if (product) {
+            addToCart(product);
+          }
+        });
+      });
+      document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const productId = parseInt(card.getAttribute('data-id'));
+          openProductDetail(productId);
+        });
+      });
+      renderPagination(totalPages);
+    }
+
+    function renderAdminProducts() {
+      productsTableBody.innerHTML = products.map(product => {
+        let priceDisplay = '';
+        if (product.onSale && product.discount > 0) {
+          const discountedPrice = product.price * (1 - product.discount / 100);
+          priceDisplay = `
+            <div>
+              <span class="text-red-500 line-through">${product.price.toFixed(2)}</span>
+              ${discountedPrice.toFixed(2)}`;
+        } else {
+          priceDisplay = `<span class="text-blue-600 font-semibold">$${product.price.toFixed(2)}</span>`;
+        }
+        return `
+          <tr>
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <img src="${product.image}" alt="${product.name}" class="w-10 h-10 object-cover rounded mr-3">
+                <div>
+                  <div class="font-medium text-gray-900">
+                    ${product.name}
+                    ${product.onSale ? '<span class="text-red-500 ml-2">🔥</span>' : ''}
+                  </div>
+                  <div class="text-gray-500 text-sm line-clamp-1">${product.description}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">${priceDisplay}</td>
+            <td class="px-6 py-4">${product.stock}</td>
+            <td class="px-6 py-4">
+              <div class="flex space-x-2">
+                <button class="text-blue-600 hover:text-blue-800 edit-product" data-id="${product.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:text-red-800 delete-product" data-id="${product.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      document.querySelectorAll('.edit-product').forEach(button => {
+        button.addEventListener('click', () => {
+          const productId = parseInt(button.getAttribute('data-id'));
+          openEditProductForm(productId);
+        });
+      });
+      document.querySelectorAll('.delete-product').forEach(button => {
+        button.addEventListener('click', () => {
+          const productId = parseInt(button.getAttribute('data-id'));
+          openDeleteConfirmation(productId);
+        });
+      });
+    }
+
+    function openNewProductForm() {
+      formTitle.textContent = 'Nuevo Producto';
+      productId.value = '';
+      productForm.reset();
+      productFormModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openEditProductForm(id) {
+      const product = products.find(p => p.id === id);
+      if (!product) return;
+      formTitle.textContent = 'Editar Producto';
+      productId.value = product.id;
+      productName.value = product.name;
+      productDescription.value = product.description;
+      productImage.value = product.image;
+      productPrice.value = product.price;
+      productStock.value = product.stock;
+      const onSaleCheckbox = document.getElementById('product-on-sale');
+      onSaleCheckbox.checked = product.onSale || false;
+      const discountContainer = document.getElementById('discount-container');
+      const discountSlider = document.getElementById('discount-slider');
+      const discountValue = document.getElementById('discount-value');
+      if (product.onSale) {
+        discountContainer.classList.remove('hidden');
+        const discount = product.discount || 0;
+        discountSlider.value = discount;
+        discountValue.textContent = discount;
+      } else {
+        discountContainer.classList.add('hidden');
+      }
+      const additionalImagesField = document.getElementById('product-additional-images');
+      additionalImagesField.value = product.additionalImages ? product.additionalImages.join(', ') : '';
+      const categorySelect = document.getElementById('product-category');
+      if (categorySelect && product.category) {
+        categorySelect.value = product.category;
+      }
+      productFormModal.classList.add('open');
+    }
+
+    function closeProductForm() {
+      productFormModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function saveProduct(e) {
+      e.preventDefault();
+      const additionalImagesString = document.getElementById('product-additional-images').value;
+      const additionalImages = additionalImagesString
+        ? additionalImagesString.split(',').map(url => url.trim()).filter(url => url.length > 0)
+        : [];
+      const categorySelect = document.getElementById('product-category');
+      const category = categorySelect ? categorySelect.value : '';
+      const onSale = document.getElementById('product-on-sale').checked;
+      const discount = onSale ? parseInt(document.getElementById('discount-slider').value) : 0;
+      const formData = {
+        name: productName.value,
+        description: productDescription.value,
+        image: productImage.value,
+        additionalImages: additionalImages,
+        price: parseFloat(productPrice.value),
+        stock: parseInt(productStock.value),
+        category: category,
+        onSale: onSale,
+        discount: discount
+      };
+      if (productId.value) {
+        const id = parseInt(productId.value);
+        const index = products.findIndex(p => p.id === id);
+        if (index !== -1) {
+          products[index] = { ...products[index], ...formData };
+          showNotification('Producto actualizado correctamente');
+        }
+      } else {
+        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+        products.push({ id: newId, ...formData });
+        showNotification('Producto añadido correctamente');
+      }
+      localStorage.setItem('products', JSON.stringify(products));
+      renderProducts();
+      renderAdminProducts();
+      closeProductForm();
+    }
+
+    function openDeleteConfirmation(id) {
+      currentProductId = id;
+      confirmationModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmationModal() {
+      confirmationModal.classList.remove('open');
+      currentProductId = null;
+      document.body.style.overflow = '';
+    }
+
+    function deleteConfirmedProduct() {
+      if (currentProductId === null) return;
+      products = products.filter(p => p.id !== currentProductId);
+      cart = cart.filter(item => item.id !== currentProductId);
+      localStorage.setItem('products', JSON.stringify(products));
+      saveCart();
+      renderProducts();
+      renderAdminProducts();
+      updateCartUI();
+      closeConfirmationModal();
+      showNotification('Producto eliminado correctamente');
+    }
+
+    function openProductDetail(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      detailImage.src = product.image;
+      detailImage.alt = product.name;
+      detailName.textContent = product.name;
+      if (product.onSale && product.discount > 0) {
+        const discountedPrice = product.price * (1 - product.discount / 100);
+        detailPrice.innerHTML = `
+          <span class="text-red-500 line-through">${product.price.toFixed(2)}</span>
+          ${discountedPrice.toFixed(2)}`;
+      } else {
+        detailPrice.textContent = product.price.toFixed(2);
+      }
+      detailDescription.textContent = product.description;
+      detailStock.textContent = product.stock > 0 ? `${product.stock} unidades disponibles` : 'Agotado';
+      const detailCategory = document.getElementById('detail-category');
+      if (detailCategory) {
+        detailCategory.textContent = product.category || 'Sin categoría';
+      }
+      const quantitySelector = document.getElementById('quantity-selector');
+      const addToCartBtn = document.getElementById('detail-add-to-cart');
+      const confirmAddBtn = document.getElementById('confirm-add-to-cart');
+      const decreaseBtn = document.getElementById('decrease-quantity');
+      const increaseBtn = document.getElementById('increase-quantity');
+      const quantityInput = document.getElementById('item-quantity');
+      quantityInput.value = 1;
+      quantitySelector.classList.add('hidden');
+      addToCartBtn.classList.remove('hidden');
+      addToCartBtn.onclick = () => {
+        addToCartBtn.classList.add('hidden');
+        quantitySelector.classList.remove('hidden');
+        quantitySelector.classList.add('quantity-animated');
+      };
+      decreaseBtn.onclick = () => {
+        const currentVal = parseInt(quantityInput.value);
+        if (currentVal > 1) {
+          quantityInput.value = currentVal - 1;
+        }
+      };
+      increaseBtn.onclick = () => {
+        const currentVal = parseInt(quantityInput.value);
+        if (currentVal < product.stock) {
+          quantityInput.value = currentVal + 1;
+        } else {
+          showNotification('No hay más unidades disponibles', 'error');
+        }
+      };
+      quantityInput.onchange = () => {
+        let value = parseInt(quantityInput.value);
+        if (isNaN(value) || value < 1) {
+          value = 1;
+        } else if (value > product.stock) {
+          value = product.stock;
+          showNotification(`Solo hay ${product.stock} unidades disponibles`, 'error');
+        }
+        quantityInput.value = value;
+      };
+      confirmAddBtn.onclick = () => {
+        const quantity = parseInt(quantityInput.value);
+        for (let i = 0; i < quantity; i++) {
+          if (i === 0 || (cart.find(item => item.id === product.id)?.quantity || 0) < product.stock) {
+            addToCart(product);
+          } else {
+            break;
+          }
+        }
+        closeProductDetail();
+      };
+      productDetailModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeProductDetail() {
+      productDetailModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function showNotification(message, type = 'success') {
+      notificationMessage.textContent = message;
+      notification.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+      notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+      setTimeout(() => {
+        notification.classList.remove('translate-y-full');
+      }, 100);
+      setTimeout(() => {
+        notification.classList.add('translate-y-full');
+        setTimeout(() => {
+          notification.classList.add('hidden');
+        }, 300);
+      }, 3000);
+    }
+
+    window.updateCartItemQuantity = updateCartItemQuantity;
+    window.openProductDetail = openProductDetail;
+    window.closeProductDetail = closeProductDetail;
+
+    function openLoginModal() {
+      loginModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLoginModal() {
+      loginModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function updateLoginButtonState(isLoggedIn) {
+      if (isLoggedIn) {
+        loginButton.innerHTML = '<i class="fas fa-sign-out-alt mr-1"></i> Cerrar Sesión';
+        loginButton.classList.remove('btn-primary');
+        loginButton.classList.add('btn-danger');
+      } else {
+        loginButton.innerHTML = '<i class="fas fa-user mr-1"></i> Iniciar Sesión';
+        loginButton.classList.remove('btn-danger');
+        loginButton.classList.add('btn-primary');
+      }
+    }
+
+    function handleLoginButtonClick() {
+      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true' || sessionStorage.getItem('userLoggedIn') === 'true';
+      if (isLoggedIn) {
+        localStorage.removeItem('userLoggedIn');
+        sessionStorage.removeItem('userLoggedIn');
+        localStorage.setItem('adminMode', 'false');
+        adminToggle.checked = true;
+        adminToggle.disabled = true;
+        toggleAdminView();
+        updateLoginButtonState(false);
+        showNotification('Sesión cerrada correctamente');
+        openLoginModal();
+      } else {
+        openLoginModal();
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = loginEmail.value;
+      const password = loginPassword.value;
+      if (!email || !password) {
+        showNotification('Por favor complete todos los campos', 'error');
+        return;
+      }
+      if (email === 'admin@gmail.com' && password === 'admin') {
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('adminMode', 'true');
+        adminToggle.checked = false;
+        adminToggle.disabled = false;
+        toggleAdminView();
+        closeLoginModal();
+        showNotification('Inicio de sesión exitoso en modo administrador');
+        loadProducts();
+        return;
+      }
+      if (email.includes('@') && password.length >= 6) {
+        if (rememberLogin.checked) {
+          localStorage.setItem('userLoggedIn', 'true');
+        } else {
+          sessionStorage.setItem('userLoggedIn', 'true');
+        }
+        localStorage.setItem('adminMode', 'false');
+        adminToggle.checked = true;
+        adminToggle.disabled = true;
+        toggleAdminView();
+        closeLoginModal();
+        showNotification('Inicio de sesión exitoso');
+        loadProducts();
+      } else {
+        showNotification('Credenciales inválidas', 'error');
+      }
+    }
+
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', filterByCategory);
+    });
+
+    function filterByCategory(e) {
+      const selectedCategory = e.currentTarget.dataset.category;
+      currentCategory = selectedCategory;
+      currentPage = 1;
+      categoryBtns.forEach(btn => {
+        if (btn.dataset.category === selectedCategory) {
+          btn.classList.add('active', 'bg-blue-500', 'text-white');
+          btn.classList.remove('bg-blue-100', 'text-blue-800');
+        } else {
+          btn.classList.remove('active', 'bg-blue-500', 'text-white');
+          btn.classList.add('bg-blue-100', 'text-blue-800');
+        }
+      });
+      renderProducts();
+    }
+
+    function handleSearch(e) {
+      searchTerm = e.target.value.toLowerCase().trim();
+      currentPage = 1;
+      renderProducts();
+    }
+
+    document.getElementById('product-on-sale').addEventListener('change', function() {
+      const discountContainer = document.getElementById('discount-container');
+      if (this.checked) {
+        discountContainer.classList.remove('hidden');
+      } else {
+        discountContainer.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('discount-slider').addEventListener('input', function() {
+      document.getElementById('discount-value').textContent = this.value;
+    });
+
+    function renderPagination(totalPages) {
+      const paginationContainer = document.getElementById('pagination-container');
+      if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+      }
+      let paginationHTML = '';
+      paginationHTML += `
+        <button class="px-3 py-2 rounded ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-100'}" 
+          ${currentPage === 1 ? 'disabled' : 'onclick="changePage(' + (currentPage - 1) + ')"'}>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      `;
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHTML += `
+          <button class="px-3 py-2 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'text-blue-600 hover:bg-blue-100'}" 
+            onclick="changePage(${i})">
+            ${i}
+          </button>
+        `;
+      }
+      paginationHTML += `
+        <button class="px-3 py-2 rounded ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-100'}" 
+          ${currentPage === totalPages ? 'disabled' : 'onclick="changePage(' + (currentPage + 1) + ')"'}>
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      `;
+      paginationContainer.innerHTML = paginationHTML;
+    }
+
+    function changePage(page) {
+      currentPage = page;
+      renderProducts();
+      productsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    window.changePage = changePage;
+
+    aboutUsToggle.addEventListener('click', function() {
+      aboutUsContent.classList.toggle('hidden');
+      if (!aboutUsContent.classList.contains('hidden')) {
+        aboutUsIcon.style.transform = 'rotate(180deg)';
+      } else {
+        aboutUsIcon.style.transform = 'rotate(0)';
+      }
+    });
+
+    // Chatbot functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggleChatbot = document.getElementById('toggle-chatbot');
+      const chatbotWidget = document.getElementById('chatbot-widget');
+      const chatbotBody = document.getElementById('chatbot-body');
+      const chatInput = document.getElementById('chat-input');
+      const sendMessage = document.getElementById('send-message');
+      const chatMessages = document.getElementById('chat-messages');
+      
+      // Initialize chatbot as minimized
+      chatbotWidget.classList.add('minimized');
+      toggleChatbot.innerHTML = '<i class="fas fa-plus"></i>';
+      
+      // Modified event listener for toggle button
+      toggleChatbot.addEventListener('click', function() {
+        chatbotWidget.classList.toggle('minimized');
+        if (chatbotWidget.classList.contains('minimized')) {
+          toggleChatbot.innerHTML = '<i class="fas fa-plus"></i>';
+        } else {
+          toggleChatbot.innerHTML = '<i class="fas fa-minus"></i>';
+        }
+      });
+      
+      function sendUserMessage() {
+        const message = chatInput.value.trim();
+        if (message === '') return;
+        chatMessages.innerHTML += `
+          <div class="flex items-end justify-end">
+            <div class="bg-blue-600 text-white rounded-lg p-2 max-w-xs">
+              <p class="text-sm">${message}</p>
+            </div>
+          </div>
+        `;
+        chatInput.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        setTimeout(getBotResponse, 1000, message);
+      }
+      
+      function getBotResponse(userMessage) {
+        let botResponse = '';
+        const msg = userMessage.toLowerCase();
+        if (msg.includes('hola') || msg.includes('buenos días') || msg.includes('buenas')) {
+          botResponse = '¡Hola! ¿En qué puedo ayudarte hoy?';
+        } else if (msg.includes('producto') || msg.includes('oferta')) {
+          botResponse = 'Tenemos muchas ofertas disponibles. Te recomiendo revisar la sección de Ofertas Especiales en nuestra página principal.';
+        } else if (msg.includes('precio') || msg.includes('costo')) {
+          botResponse = 'Los precios de nuestros productos varían. ¿Hay algún producto específico por el que estés interesado?';
+        } else if (msg.includes('envío') || msg.includes('entrega')) {
+          botResponse = 'Ofrecemos envío gratuito en compras superiores a $100. El tiempo estimado de entrega es de 3 a 5 días hábiles.';
+        } else if (msg.includes('gracias')) {
+          botResponse = '¡De nada! Estoy aquí para ayudarte. ¿Necesitas algo más?';
+        } else {
+          botResponse = 'Entiendo. Para información más detallada, te recomendaría contactar directamente con nuestro equipo de atención al cliente al +34 900 123 456.';
+        }
+        chatMessages.innerHTML += `
+          <div class="flex items-start">
+            <div class="bg-blue-100 rounded-lg p-2 max-w-xs">
+              <p class="text-sm">${botResponse}</p>
+            </div>
+          </div>
+        `;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      
+      sendMessage.addEventListener('click', sendUserMessage);
+      chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          sendUserMessage();
+        }
+      });
+    });
+</script>
+</body>
+</html>
+
+<!-- Footer Section -->
+<footer class="bg-gray-800 text-white mt-12">
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between">
+      <!-- Store Info -->
+      <div class="mb-8 md:mb-0 md:w-1/3">
+        <div class="flex items-center mb-4">
+          <img src="https://i.postimg.cc/dQRbMV1F/Logo-Electro-1.png" alt="ElectroMarket logo" class="w-16 h-16 mr-2">
+          <h3 class="text-xl font-bold">ElectroMarket</h3>
+        </div>
+        <p class="text-gray-300 mb-4">Tu tienda de confianza para todos los productos electrónicos. Ofrecemos la mejor calidad y servicio desde 2010.</p>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-300 hover:text-white transition">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="#" class="text-gray-300 hover:text-white transition">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="#" class="text-gray-300 hover:text-white transition">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="#" class="text-gray-300 hover:text-white transition">
+            <i class="fab fa-youtube"></i>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Quick Links -->
+      <div class="mb-8 md:mb-0 md:w-1/4">
+        <h4 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Enlaces rápidos</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 hover:text-white transition">Inicio</a></li>
+          <li><a href="#" class="text-gray-300 hover:text-white transition">Productos</a></li>
+          <li><a href="#" class="text-gray-300 hover:text-white transition">Ofertas</a></li>
+          <li><a href="#" class="text-gray-300 hover:text-white transition">Contacto</a></li>
+          <li><a href="#" class="text-gray-300 hover:text-white transition">Preguntas frecuentes</a></li>
+        </ul>
+      </div>
+      
+      <!-- About Us (Conócenos) -->
+      <div class="md:w-1/3">
+        <h4 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Conócenos</h4>
+        <div class="mb-4">
+          <button id="about-us-toggle" class="flex items-center justify-between w-full text-left text-gray-300 hover:text-white transition">
+            <span>Nuestra Historia</span>
+            <i class="fas fa-chevron-down transition-transform" id="about-us-icon"></i>
+          </button>
+          <div id="about-us-content" class="mt-2 text-gray-400 text-sm hidden">
+            <p>ElectroMarket nació en 2010 con la visión de ofrecer la mejor tecnología a precios accesibles. Desde entonces, hemos crecido para convertirnos en líderes del mercado de electrónica en la región.</p>
+            <p class="mt-2">Nuestro compromiso es brindar productos de alta calidad, excelente servicio al cliente y precios competitivos.</p>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-start">
+            <i class="fas fa-map-marker-alt text-gray-300 mt-1 mr-3"></i>
+            <span class="text-gray-300">Av. Tecnológica 123, Ciudad Digital, 28001</span>
+          </div>
+          <div class="flex items-start">
+            <i class="fas fa-phone text-gray-300 mt-1 mr-3"></i>
+            <span class="text-gray-300">+34 900 123 456</span>
+          </div>
+          <div class="flex items-start">
+            <i class="fas fa-envelope text-gray-300 mt-1 mr-3"></i>
+            <span class="text-gray-300">info@electromarket.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400 text-sm">
+      <p>&copy; 2025 ElectroMarket. Todos los derechos reservados.</p>
+      <div class="flex justify-center space-x-4 mt-2">
+        <a href="#" class="hover:text-white transition">Política de Privacidad</a>
+        <a href="#" class="hover:text-white transition">Términos y Condiciones</a>
+        <a href="#" class="hover:text-white transition">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Chatbot Widget -->
+<div id="chatbot-widget" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg overflow-hidden z-50 w-80 transition-all duration-300">
+  <!-- Chatbot Header -->
+  <div class="bg-blue-600 text-white p-3 flex justify-between items-center">
+    <div class="flex items-center">
+      <i class="fas fa-robot mr-2"></i>
+      <h3 class="font-semibold">ElectroBot Asistente</h3>
+    </div>
+    <button id="toggle-chatbot" class="text-white hover:text-gray-200 transition">
+      <i class="fas fa-minus"></i>
+    </button>
+  </div>
+  
+  <!-- Chatbot Body -->
+  <div id="chatbot-body" class="flex flex-col h-96">
+    <!-- Chat Messages Container -->
+    <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-3 bg-gray-50">
+      <!-- Bot welcome message -->
+      <div class="flex items-start">
+        <div class="bg-blue-100 rounded-lg p-2 max-w-xs">
+          <p class="text-sm">¡Hola! Soy ElectroBot, tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Input Area -->
+    <div class="border-t p-3 bg-white">
+      <div class="flex items-center">
+        <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." 
+          class="flex-1 border rounded-l-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button id="send-message" class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
